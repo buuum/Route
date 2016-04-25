@@ -36,11 +36,12 @@ class Dispatcher
     /**
      * @param $httpMethod
      * @param $requestUrl
+     * @param HandlerResolverInterface|null $resolver
      * @return bool|mixed|null
      * @throws HttpMethodNotAllowedException
      * @throws HttpRouteNotFoundException
      */
-    public function dispatchRequest($httpMethod, $requestUrl)
+    public function dispatchRequest($httpMethod, $requestUrl, HandlerResolverInterface $resolver = null)
     {
         $httpMethod = strtoupper($httpMethod);
 
@@ -76,19 +77,21 @@ class Dispatcher
                 // before filters //
                 if (!empty($route['before'])) {
                     foreach ($route['before'] as $before) {
-                        $response = $this->callFunction($this->route_map['filters'][$before], $arguments);
+                        $response = $this->callFunction($this->route_map['filters'][$before], $arguments, null,
+                            $resolver);
                         if ($response !== null) {
                             return $response;
                         }
                     }
                 }
 
-                $response = $this->callFunction($route['handler'], $arguments);
+                $response = $this->callFunction($route['handler'], $arguments, null, $resolver);
 
                 // after filters //
                 if (!empty($route['after'])) {
                     foreach ($route['after'] as $after) {
-                        $response = $this->callFunction($this->route_map['filters'][$after], $arguments, $response);
+                        $response = $this->callFunction($this->route_map['filters'][$after], $arguments, $response,
+                            $resolver);
                     }
                 }
 
@@ -153,10 +156,15 @@ class Dispatcher
      * @param $controller
      * @param $parameters
      * @param null $_response
+     * @param HandlerResolverInterface $resolver
      * @return bool|mixed|null
      */
-    private function callFunction($controller, $parameters, $_response = null)
-    {
+    private function callFunction(
+        $controller,
+        $parameters,
+        $_response = null,
+        HandlerResolverInterface $resolver = null
+    ) {
         $response = false;
 
         if (!is_array($controller) && is_callable($controller)) {
@@ -164,9 +172,12 @@ class Dispatcher
             $response = call_user_func_array($controller, $parameters);
         } else {
             if (method_exists($class = $controller[0], $method = $controller[1])) {
-                $c = new $class();
-                $parameters = $this->arrangeMethodArgs($c, $method, $parameters);
-                $response = call_user_func_array([$c, $method], $parameters);
+                $parameters = $this->arrangeMethodArgs($class, $method, $parameters);
+                if ($resolver) {
+                    $response = call_user_func_array($resolver->resolve($controller), $parameters);
+                } else {
+                    $response = call_user_func_array([$class, $method], $parameters);
+                }
             }
         }
 
@@ -280,9 +291,9 @@ class Dispatcher
                     $url = str_replace('{_host}', $this->url_info['host'], $url);
                 } else {
                     if (!empty($options[$matches[1][$n]])) {
-                        if(preg_match('@^'.$parameters[$matches[1][$n]].'$@', $options[$matches[1][$n]])){
+                        if (preg_match('@^' . $parameters[$matches[1][$n]] . '$@', $options[$matches[1][$n]])) {
                             $url = str_replace($match, $options[$matches[1][$n]], $url);
-                        }else{
+                        } else {
                             $parameter = $matches[1][$n];
                             throw new BadRouteException("The paramater $parameter is invalid");
                         }
