@@ -1,8 +1,8 @@
 Buuum - Fast request router for PHP
 =======================================
 
-[![Build Status](https://api.travis-ci.org/alfonsmartinez/Buuum.png)](http://travis-ci.org/alfonsmartinez/Buuum)
-[![Packagist](https://img.shields.io/packagist/v/Buuum/Buuum.svg?maxAge=2592000)](https://packagist.org/packages/Buuum/Buuum)
+[![Build Status](https://travis-ci.org/buuum/Route.svg?branch=master)](https://travis-ci.org/buuum/Route)
+[![Packagist](https://img.shields.io/packagist/v/buuum/route.svg?maxAge=2592000)](https://packagist.org/packages/buuum/route)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](#license)
 
 ## Simple and extremely flexible PHP router class, with support for route parameters, restful, filters and reverse routing.
