@@ -1,0 +1,33 @@
+{
+  "name": "buuum/route",
+  "type": "library",
+  "description": "Fast, fully featured restful request router for PHP",
+  "homepage": "https://github.com/alfonsmartinez/EasyRoute",
+  "keywords": [
+    "routing",
+    "router"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Alfons Martinez",
+      "email": "alfonsmartinezparra@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Buuum\\": "src/Route"
+    }
+  },
+  "require": {
+    "php": ">=5.5.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "*"
+  },
+  "suggest" : {
+    "symfony/psr-http-message-bridge": "Convert Symfony Request to Psr7",
+    "symfony/http-foundation" : "Use Symfony Request components",
+    "zendframework/zend-diactoros": "Psr7 response and request"
+  }
+}
