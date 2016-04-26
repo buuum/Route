@@ -15,6 +15,11 @@ class Dispatcher
     private $route_map = [];
 
     /**
+     * @var mixed
+     */
+    private $request_url = null;
+
+    /**
      * @var array
      */
     private $url_info = [
@@ -45,6 +50,7 @@ class Dispatcher
     {
         $httpMethod = strtoupper($httpMethod);
 
+        $this->request_url = $requestUrl;
         $this->parseUrl($requestUrl);
         $this->checkMethod($httpMethod);
         $this->checkBaseURI();
@@ -115,8 +121,13 @@ class Dispatcher
      * @return mixed
      * @throws HttpRouteNotFoundException
      */
-    public function getUrlRequest($name, $options, $requestUrl)
+    public function getUrlRequest($name, $options = [], $requestUrl = null)
     {
+        if (is_null($requestUrl) && is_null($this->request_url)) {
+            throw new HttpRouteNotFoundException("Route $name not found");
+        }
+        $requestUrl = ($requestUrl) ?: $this->request_url;
+
         $this->parseUrl($requestUrl);
         $this->checkBaseURI();
 
