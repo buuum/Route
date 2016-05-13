@@ -52,7 +52,13 @@ class Dispatcher
 
         $this->request_url = $requestUrl;
         $this->parseUrl($requestUrl);
-        $this->checkMethod($httpMethod);
+        if (!$this->issetMethod($httpMethod)) {
+            if ($resolver && $resolver->parseErrors()) {
+                return $resolver->resolveErrors(405, $this->url_info);
+            } else {
+                throw new HttpMethodNotAllowedException("Not method $httpMethod allowed");
+            }
+        }
         $this->checkBaseURI();
 
         // Strip query string (?a=b) from Request Url
@@ -107,7 +113,11 @@ class Dispatcher
         }
 
         if (!$flag) {
-            throw new HttpRouteNotFoundException("Not route found");
+            if ($resolver && $resolver->parseErrors()) {
+                return $resolver->resolveErrors(404, $this->url_info);
+            } else {
+                throw new HttpRouteNotFoundException("Not route found");
+            }
         }
 
         return true;
@@ -252,15 +262,16 @@ class Dispatcher
 
     /**
      * @param $httpMethod
-     * @throws HttpMethodNotAllowedException
+     * @return bool
      */
-    private function checkMethod($httpMethod)
+    private function issetMethod($httpMethod)
     {
 
         $httpMethod = strtoupper($httpMethod);
         if (!defined("\\Buuum\\Route::$httpMethod")) {
-            throw new HttpMethodNotAllowedException("Not method $httpMethod allowed");
+            return false;
         }
+        return true;
     }
 
     /**
