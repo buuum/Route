@@ -4,10 +4,15 @@ namespace Buuum;
 
 use Buuum\Exception\BadRouteException;
 use Buuum\Exception\HttpMethodNotAllowedException;
+use Buuum\Exception\HttpMethodNotExistException;
 use Buuum\Exception\HttpRouteNotFoundException;
 
 class Dispatcher
 {
+
+    const ERRORNOTFOUND = 404;
+    const ERRORMETHODNOTALLOWED = 405;
+    const ERRORCLASSMETHODNOTFOUND = 406;
 
     /**
      * @var array
@@ -54,7 +59,7 @@ class Dispatcher
         $this->parseUrl($requestUrl);
         if (!$this->issetMethod($httpMethod)) {
             if ($resolver && $resolver->parseErrors()) {
-                return $resolver->resolveErrors(405, $this->url_info);
+                return $resolver->resolveErrors(self::ERRORMETHODNOTALLOWED, $this->url_info);
             } else {
                 throw new HttpMethodNotAllowedException("Not method $httpMethod allowed");
             }
@@ -114,7 +119,7 @@ class Dispatcher
 
         if (!$flag) {
             if ($resolver && $resolver->parseErrors()) {
-                return $resolver->resolveErrors(404, $this->url_info);
+                return $resolver->resolveErrors(self::ERRORNOTFOUND, $this->url_info);
             } else {
                 throw new HttpRouteNotFoundException("Not route found");
             }
@@ -177,8 +182,9 @@ class Dispatcher
      * @param $controller
      * @param $parameters
      * @param null $_response
-     * @param HandlerResolverInterface $resolver
-     * @return bool|mixed|null
+     * @param HandlerResolverInterface|null $resolver
+     * @return mixed|null
+     * @throws HttpMethodNotExistException
      */
     private function callFunction(
         $controller,
@@ -186,7 +192,6 @@ class Dispatcher
         $_response = null,
         HandlerResolverInterface $resolver = null
     ) {
-        $response = false;
 
         if (!is_array($controller) && is_callable($controller)) {
             $parameters = $this->arrangeFuncArgs($controller, $parameters);
@@ -198,6 +203,12 @@ class Dispatcher
                     $response = call_user_func_array($resolver->resolve($controller), $parameters);
                 } else {
                     $response = call_user_func_array([$class, $method], $parameters);
+                }
+            }else{
+                if ($resolver && $resolver->parseErrors()) {
+                    return $resolver->resolveErrors(self::ERRORCLASSMETHODNOTFOUND, $this->url_info);
+                } else {
+                    throw new HttpMethodNotExistException("Not method $method exist in class $class");
                 }
             }
         }
@@ -211,7 +222,7 @@ class Dispatcher
     private function checkBaseURI()
     {
         if (substr($this->url_info['path'], 0, strlen($this->route_map['base_uri'])) != $this->route_map['base_uri']) {
-            throw new HttpRouteNotFoundException(404);
+            throw new HttpRouteNotFoundException(self::ERRORNOTFOUND);
         }
     }
 
