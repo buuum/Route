@@ -35,6 +35,11 @@ class Dispatcher
     ];
 
     /**
+     * @var array
+     */
+    private $last_route = [];
+
+    /**
      * Dispatcher constructor.
      * @param array $data
      */
@@ -90,6 +95,8 @@ class Dispatcher
 
                 $arguments['_requesturi'] = $this->url_info;
                 $arguments['_prefix'] = $route['prefix'];
+
+                $this->last_route = $route;
 
                 // before filters //
                 if (!empty($route['before'])) {
@@ -176,6 +183,18 @@ class Dispatcher
 
         throw new BadRouteException('Route doesnt exist');
 
+    }
+
+    /**
+     * @param $name
+     * @return bool
+     */
+    public function isPageActual($name)
+    {
+        if (!empty($this->last_route) && $this->last_route['name'] == $name) {
+            return true;
+        }
+        return false;
     }
 
     /**

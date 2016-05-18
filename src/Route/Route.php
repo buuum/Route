@@ -235,6 +235,7 @@ class Route
         return [
             'after'      => $this->getAfters(),
             'before'     => $this->getBefores(),
+            'name'       => $this->getName(),
             'uri'        => $this->uri,
             'regex'      => $this->getUriRegex(),
             'regex_pre'  => $this->getUriRegexPre(),
