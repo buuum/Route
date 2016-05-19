@@ -50,6 +50,14 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
             return "controller index";
         })->setName('index');
 
+        $router->any('/any/', function(){
+            return "controller any";
+        })->setName('any');
+
+        $router->put('/put/', function(){
+            return "controller put";
+        });
+
         $router->post('/', function () {
             return 'controller index post';
         });
@@ -62,7 +70,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
             return "controller itemsr $_requesturi[scheme] $_requesturi[host]";
         });
 
-        $router->group(['prefix' => 'prefixitem'], function(\Buuum\Router $router){
+        $router->group(['prefix' => 'prefixitem'], function (\Buuum\Router $router) {
             $router->get('/itemsr2/', function ($_requesturi, $_prefix) {
                 return "controller itemsr2 $_requesturi[scheme] $_requesturi[host] $_prefix";
             });
@@ -149,27 +157,27 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
 
         });
 
-        $router->group(['prefix' => 'en'], function(\Buuum\Router $router){
+        $router->group(['prefix' => 'en'], function (\Buuum\Router $router) {
 
-            $router->get('/', function(){
+            $router->get('/', function () {
                 return 'home with prefix en';
             })->setName('home');
 
         });
 
-        $router->group(['prefix' => 'es'], function(\Buuum\Router $router){
+        $router->group(['prefix' => 'es'], function (\Buuum\Router $router) {
 
-            $router->get('/', function(){
+            $router->get('/', function () {
                 return 'home with prefix es';
             })->setName('home');
 
         });
 
-        $router->get('/home/', function(){
+        $router->get('/home/', function () {
             return 'home without prefix';
         })->setName('home');
 
-        $router->get('/home/{id:[0-9]+}/', function($id, $_requesturi, $_prefix){
+        $router->get('/home/{id:[0-9]+}/', function ($id, $_requesturi, $_prefix) {
             return "home without prefix $id $_requesturi[scheme] $_requesturi[host] $_prefix";
         })->setScheme('https');
 
@@ -181,6 +189,18 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
     {
         return [
             ['GET', 'http://routes.dev', 'controller index'],
+
+            ['PUT', 'http://routes.dev/put/', 'controller put'],
+            ['put', 'http://routes.dev/put/', 'controller put'],
+
+            ['get', 'http://routes.dev/any/', 'controller any'],
+            ['post', 'http://routes.dev/any/', 'controller any'],
+            ['put', 'http://routes.dev/any/', 'controller any'],
+            ['patch', 'http://routes.dev/any/', 'controller any'],
+            ['options', 'http://routes.dev/any/', 'controller any'],
+            ['delete', 'http://routes.dev/any/', 'controller any'],
+            ['head', 'http://routes.dev/any/', 'controller any'],
+
             ['get', 'http://routes.dev', 'controller index'],
             ['POST', 'http://routes.dev', 'controller index post'],
             ['post', 'http://routes.dev', 'controller index post'],

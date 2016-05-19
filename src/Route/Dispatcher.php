@@ -76,15 +76,15 @@ class Dispatcher
             $requestUrl = substr($requestUrl, 0, $strpos);
         }
 
-        if (!isset($this->route_map['routes'][null]) || !is_array($this->route_map['routes'][null])) {
-            $this->route_map['routes'][null] = [];
+        if (!isset($this->route_map['routes'][Route::ANY]) || !is_array($this->route_map['routes'][Route::ANY])) {
+            $this->route_map['routes'][Route::ANY] = [];
         }
         if (!isset($this->route_map['routes'][$httpMethod]) ||
             !is_array($this->route_map['routes'][$httpMethod])
         ) {
             $this->route_map['routes'][$httpMethod] = [];
         }
-        $routes = array_merge($this->route_map['routes'][null], $this->route_map['routes'][$httpMethod]);
+        $routes = array_merge($this->route_map['routes'][Route::ANY], $this->route_map['routes'][$httpMethod]);
         $flag = false;
 
         foreach ($routes as $route) {
