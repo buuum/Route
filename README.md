@@ -134,6 +134,21 @@ $router->get('/home/', function () {
 
 ```
 
+## Multiple routes one controller
+
+```php
+$router->get(['/home/','/en/home/','/fr/home/'], function () {
+    return 'home';
+})->setName('home');
+```
+
+## Multiple methods one controller
+
+```php
+$router->map(['GET','POST'], '/home/', function () {
+    return 'home';
+})->setName('home');
+```
 
 ## Match requests
 

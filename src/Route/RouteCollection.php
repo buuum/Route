@@ -31,6 +31,11 @@ class RouteCollection
     private $filters = [];
 
     /**
+     * @var Route[]
+     */
+    private $last_group = [];
+
+    /**
      * @var array
      */
     protected $patternMatchers = [
@@ -51,28 +56,72 @@ class RouteCollection
 
     /**
      * @param $httpMethod
-     * @param $route
+     * @param $routes
      * @param $options
      * @param $handler
      * @return Route
      */
-    public function addRoute($httpMethod, $route, $options, $handler)
+    public function addRoute($httpMethod, $routes, $options, $handler)
     {
         if (!is_array($httpMethod)) {
             $httpMethod = array($httpMethod);
         }
 
+        $this->last_group = [];
+
         $this->setPrefixs($this->getPrefix($options));
         $this->setHosts($options);
 
         $options = array_merge($options, ['base_uri' => $this->base_uri]);
-        $route = new Route($route, $options, $handler);
 
-        foreach ($httpMethod as $method) {
-            $this->routes[$method][] = $route;
+        $group_routes = (!is_array($routes))? [$routes] : $routes;
+
+        foreach ($group_routes as $route) {
+            $_route = new Route($route, $options, $handler);
+            $this->last_group[] = $_route;
+
+            foreach ($httpMethod as $method) {
+                $this->routes[$method][] = $_route;
+            }
         }
 
-        return $route;
+        return $this;
+    }
+
+    /**
+     * @param $name
+     * @return $this
+     */
+    public function setName($name)
+    {
+        foreach ($this->last_group as $route) {
+            $route->setName($name);
+        }
+        return $this;
+    }
+
+    /**
+     * @param $host
+     * @return $this
+     */
+    public function setHost($host)
+    {
+        foreach ($this->last_group as $route) {
+            $route->setHost($host);
+        }
+        return $this;
+    }
+
+    /**
+     * @param $scheme
+     * @return $this
+     */
+    public function setScheme($scheme)
+    {
+        foreach ($this->last_group as $route) {
+            $route->setScheme($scheme);
+        }
+        return $this;
     }
 
     /**

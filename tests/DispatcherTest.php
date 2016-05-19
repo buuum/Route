@@ -50,11 +50,19 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
             return "controller index";
         })->setName('index');
 
-        $router->any('/any/', function(){
+        $router->any('/any/', function () {
             return "controller any";
         })->setName('any');
 
-        $router->put('/put/', function(){
+        $router->map(['GET', 'POST'], '/map/', function () {
+            return "controller map";
+        });
+
+        $router->get(['/group/', '/en/group/', '/fr/group/'], function () {
+            return "controller group";
+        });
+
+        $router->put('/put/', function () {
             return "controller put";
         });
 
@@ -190,8 +198,15 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         return [
             ['GET', 'http://routes.dev', 'controller index'],
 
+            ['GET', 'http://routes.dev/group/', 'controller group'],
+            ['GET', 'http://routes.dev/en/group/', 'controller group'],
+            ['GET', 'http://routes.dev/fr/group/', 'controller group'],
+
             ['PUT', 'http://routes.dev/put/', 'controller put'],
             ['put', 'http://routes.dev/put/', 'controller put'],
+
+            ['GET', 'http://routes.dev/map/', 'controller map'],
+            ['POST', 'http://routes.dev/map/', 'controller map'],
 
             ['get', 'http://routes.dev/any/', 'controller any'],
             ['post', 'http://routes.dev/any/', 'controller any'],
