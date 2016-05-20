@@ -75,9 +75,13 @@ class RouteCollection
         $options = array_merge($options, ['base_uri' => $this->base_uri]);
 
         $group_routes = (!is_array($routes))? [$routes] : $routes;
+        $is_group = count($group_routes) > 1;
 
         foreach ($group_routes as $route) {
             $_route = new Route($route, $options, $handler);
+            if ($is_group) {
+                $_route->setGroup();
+            }
             $this->last_group[] = $_route;
 
             foreach ($httpMethod as $method) {

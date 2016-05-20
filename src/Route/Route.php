@@ -55,6 +55,11 @@ class Route
     private $close_tag = '';
 
     /**
+     * @var bool
+     */
+    private $is_group = false;
+
+    /**
      * Route constructor.
      * @param $route
      * @param $options
@@ -176,6 +181,14 @@ class Route
         }
 
         return '';
+    }
+
+    /**
+     *
+     */
+    public function setGroup()
+    {
+        $this->is_group = true;
     }
 
     /**
@@ -344,6 +357,16 @@ class Route
         if (substr($this->route, -1) == '/') {
             $this->close_tag = '/';
             $this->route = substr($this->route, 0, -1);
+        }
+
+        if ($this->is_group) {
+            $prefix_group = explode('/', $this->uri);
+            if (count($prefix_group) > 2) {
+                $prefix_group = $prefix_group[1];
+                if ($prefix_group != '') {
+                    $uri .= '/' . $prefix_group;
+                }
+            }
         }
 
         if ($full_uri) {
