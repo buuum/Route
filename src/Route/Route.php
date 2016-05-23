@@ -372,7 +372,7 @@ class Route
         if ($full_uri) {
             return $this->safeRegex($uri . $this->route);
         } else {
-            return $this->safeRegex($uri);
+            return $this->safeRegex($uri . '/');
         }
     }
 
