@@ -165,20 +165,13 @@ class Dispatcher
             return $this->buildUrl($this->route_map['reverse'][$name][0], $options);
 
         } else {
-
             foreach ($this->route_map['reverse'][$name] as $item) {
-
                 $route_pattern = $item['regex_pre'];
-
                 if (preg_match($route_pattern, $requestUrl, $arguments)) {
                     $options = array_merge($options, $arguments);
-
                     return $this->buildUrl($item, $options);
-
                 }
-
             }
-
         }
 
         throw new BadRouteException('Route doesnt exist');

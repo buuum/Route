@@ -322,9 +322,34 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
             ['items', [], 'http://routes.dev', 'http://routes.dev/items/'],
             ['viewitem', ['id' => 65], 'http://routes.dev', 'https://routes.dev/viewitem/65/'],
             ['home', [], 'http://routes.dev/en', 'http://routes.dev/en/'],
-            ['home', [], 'http://routes.dev/en/demo/', 'http://routes.dev/en/'],
+            ['home', [], 'http://routes.dev/en/demo', 'http://routes.dev/en/'],
             ['home', [], 'http://routes.dev/es', 'http://routes.dev/es/'],
-            ['home', [], 'http://routes.dev', 'http://routes.dev/home/'],
+            ['home', [], 'http://routes.dev/', 'http://routes.dev/home/'],
+        ];
+    }
+
+    /**
+     * @dataProvider getUrls2
+     */
+    public function test2DynamicUrlsWithEndSlash($name, $params, $requesturi, $result)
+    {
+        $dispatcher = new \Buuum\Dispatcher(self::$router->getData());
+
+        $url = $dispatcher->getUrlRequest($name, $params, $requesturi);
+        $this->assertEquals($result, $url);
+    }
+
+    public function getUrls2()
+    {
+        return [
+            ['index', [], 'http://routes.dev', 'http://routes.dev/'],
+            ['items2', [], 'http://routes.dev', 'http://routes.dev/items2'],
+            ['items', [], 'http://routes.dev', 'http://routes.dev/items/'],
+            ['viewitem', ['id' => 65], 'http://routes.dev', 'https://routes.dev/viewitem/65/'],
+            ['home', [], 'http://routes.dev/en/', 'http://routes.dev/en/'],
+            ['home', [], 'http://routes.dev/en/demo/', 'http://routes.dev/en/'],
+            ['home', [], 'http://routes.dev/es/', 'http://routes.dev/es/'],
+            ['home', [], 'http://routes.dev/', 'http://routes.dev/home/'],
         ];
     }
 }
