@@ -179,15 +179,11 @@ class Dispatcher
     }
 
     /**
-     * @param $name
-     * @return bool
+     * @return array|bool
      */
-    public function isPageActual($name)
+    public function getLastPage()
     {
-        if (!empty($this->last_route) && $this->last_route['name'] == $name) {
-            return true;
-        }
-        return false;
+        return (!empty($this->last_route)) ? $this->last_route : false;
     }
 
     /**

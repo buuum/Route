@@ -4,3 +4,4 @@ composer.lock
 /demo/
 .idea
 .DS_Store
+releasenotes.md
