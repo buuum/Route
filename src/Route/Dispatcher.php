@@ -104,7 +104,16 @@ class Dispatcher
                         $response = $this->callFunction($this->route_map['filters'][$before], $arguments, null,
                             $resolver);
                         if ($response !== null) {
-                            return $response;
+                            if (!is_array($response) || !isset($response['passed']) || !isset($response['response'])) {
+                                throw new \InvalidArgumentException("Response should be an array composed by keys 'passed' and 'response'");
+                            }
+                            if (!$response['passed']) {
+                                return $response['response'];
+                            } else {
+                                if (is_array($response['response'])) {
+                                    $arguments = array_merge($arguments, $response['response']);
+                                }
+                            }
                         }
                     }
                 }
@@ -212,7 +221,7 @@ class Dispatcher
                 } else {
                     $response = call_user_func_array([$class, $method], $parameters);
                 }
-            }else{
+            } else {
                 if ($resolver && $resolver->parseErrors()) {
                     return $resolver->resolveErrors(self::ERRORCLASSMETHODNOTFOUND, $this->url_info);
                 } else {

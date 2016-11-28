@@ -86,6 +86,17 @@ $router = new Router('/examples');
 $router->filter('auth', function ($_requesturi) {
     //return 'hola auth';
     var_dump($_requesturi);
+    return [
+        'passed' => true,
+        response => [
+            'uri' => $_requesturi
+        ]
+    ];
+    
+    return [
+        'passed' => false,
+        'response' => new RedirectResponse('path')
+    ];
 });
 
 $router->get('/', function () {
