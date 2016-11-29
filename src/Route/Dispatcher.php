@@ -104,9 +104,11 @@ class Dispatcher
                         $response = $this->callFunction($this->route_map['filters'][$before], $arguments, null,
                             $resolver);
                         if ($response !== null) {
-                            if (!is_array($response) && !isset($response['passed']) && !isset($response['response'])) {
-                                //throw new \InvalidArgumentException("Response should be an array composed by keys 'passed' and 'response'");
+                            if (!is_array($response)) {
                                 return $response;
+                            }
+                            if (!isset($response['passed']) || !isset($response['response'])) {
+                                throw new \InvalidArgumentException("Response should be an array composed by keys 'passed' and 'response'");
                             }
                             if (!$response['passed']) {
                                 return $response['response'];
