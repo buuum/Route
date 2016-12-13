@@ -171,6 +171,10 @@ class Dispatcher
 
         if (count($this->route_map['reverse'][$name]) == 1) {
 
+            if (in_array(Route::LINK, $this->route_map['reverse'][$name][0]['methods'])) {
+                return $this->route_map['reverse'][$name][0]['uri'];
+            }
+
             preg_match($this->route_map['reverse'][$name][0]['regex_pre'], $requestUrl, $arguments);
             $options = array_merge($options, $arguments);
 
@@ -180,6 +184,11 @@ class Dispatcher
             foreach ($this->route_map['reverse'][$name] as $item) {
                 $route_pattern = $item['regex_pre'];
                 if (preg_match($route_pattern, $requestUrl, $arguments)) {
+
+                    if (in_array(Route::LINK, $item['methods'])) {
+                        return $item['uri'];
+                    }
+
                     $options = array_merge($options, $arguments);
                     return $this->buildUrl($item, $options);
                 }

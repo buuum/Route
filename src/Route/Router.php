@@ -136,6 +136,15 @@ class Router
     }
 
     /**
+     * @param $route
+     * @return Route
+     */
+    public function link($route)
+    {
+        return $this->map(Route::LINK, $route, []);
+    }
+
+    /**
      * @param string $name
      * @param array|callable $handler
      */

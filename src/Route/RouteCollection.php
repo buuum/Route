@@ -78,7 +78,7 @@ class RouteCollection
         $is_group = count($group_routes) > 1;
 
         foreach ($group_routes as $route) {
-            $_route = new Route($route, $options, $handler);
+            $_route = new Route($route, $options, $handler, $httpMethod);
             if ($is_group) {
                 $_route->setGroup();
             }

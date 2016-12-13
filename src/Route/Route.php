@@ -18,6 +18,7 @@ class Route
     const PATCH = 'PATCH';
     const DELETE = 'DELETE';
     const OPTIONS = 'OPTIONS';
+    const LINK = 'LINK';
 
     /**
      * @var string
@@ -60,18 +61,25 @@ class Route
     private $is_group = false;
 
     /**
+     * @var array
+     */
+    private $methods = [];
+
+    /**
      * Route constructor.
      * @param $route
      * @param $options
      * @param $handler
+     * @param $methods
      * @param string $base_uri
      */
-    public function __construct($route, $options, $handler, $base_uri = "")
+    public function __construct($route, $options, $handler, $methods, $base_uri = "")
     {
         $this->route = $route;
         $this->options = $options;
         $this->uri = $this->setUri();
         $this->handler = $handler;
+        $this->methods = $methods;
     }
 
     /**
@@ -257,7 +265,8 @@ class Route
             'handler'    => $this->getHandler(),
             'host'       => $this->getHost(),
             'prefix'     => $this->getPrefix(),
-            'scheme'     => $this->getScheme()
+            'scheme'     => $this->getScheme(),
+            'methods'    => $this->methods
         ];
     }
 
