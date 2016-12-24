@@ -360,7 +360,12 @@ class Dispatcher
                             throw new BadRouteException("The paramater $parameter is invalid");
                         }
                     } else {
-                        throw new BadRouteException('Missing parameters url');
+                        preg_match_all('@(\[|\(|\)|\])@', $parameters[$matches[1][$n]], $m);
+                        if (empty($m[0])) {
+                            $url = str_replace($match, $parameters[$matches[1][$n]], $url);
+                        } else {
+                            throw new BadRouteException('Missing parameters ' . $matches[1][$n]);
+                        }
                     }
                 }
             }

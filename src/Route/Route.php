@@ -75,11 +75,19 @@ class Route
      */
     public function __construct($route, $options, $handler, $methods, $base_uri = "")
     {
-        $this->route = $route;
         $this->options = $options;
+        $this->route = $this->setRoute($route);
         $this->uri = $this->setUri();
         $this->handler = $handler;
         $this->methods = $methods;
+    }
+
+    private function setRoute($route)
+    {
+        if (!empty($this->options['uri_appends'])) {
+            $route = '/' . implode('/', $this->options['uri_appends']) . $route;
+        }
+        return $route;
     }
 
     /**
@@ -281,19 +289,32 @@ class Route
         return str_replace($f, $r, $content);
     }
 
+
+    private function getUriAppend()
+    {
+        if (!empty($this->options['uri_appends'])) {
+            return implode('/', $this->options['uri_appends']);
+        }
+        return '';
+    }
+
     /**
      * @return string
      */
     private function getPrefix()
     {
-        $prefix = "";
         if (!empty($this->options['prefix'])) {
-            $prefix = $this->options['prefix'];
-            if (is_array($this->options['prefix'])) {
-                $prefix = implode('/', $this->options['prefix']);
-            }
+            return $this->options['prefix'];
         }
-        return $prefix;
+        return '';
+        //$prefix = "";
+        //if (!empty($this->options['prefix'])) {
+        //    $prefix = $this->options['prefix'];
+        //    if (is_array($this->options['prefix'])) {
+        //        $prefix = implode('/', $this->options['prefix']);
+        //    }
+        //}
+        //return $prefix;
     }
 
 
@@ -362,6 +383,10 @@ class Route
         if (!empty($this->getPrefix())) {
             $uri .= '/' . $this->getPrefix();
         }
+
+        //if (!empty($this->getUriAppend())) {
+        //    $uri .= '/' . $this->getUriAppend();
+        //}
 
         if (substr($this->route, -1) == '/') {
             $this->close_tag = '/';

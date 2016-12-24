@@ -35,6 +35,7 @@ class RouteCollection
      */
     private $last_group = [];
 
+    private $uri_appends = [];
     /**
      * @var array
      */
@@ -69,12 +70,17 @@ class RouteCollection
 
         $this->last_group = [];
 
-        $this->setPrefixs($this->getPrefix($options));
+        //$options['prefix'] = $this->getPrefix($options);
+        //$this->setPrefixs($options['prefix']);
+
+
+        $options['prefix'] = $this->parsePrefix($options);
+        $options['uri_appends'] = $this->uri_appends;
+        $this->uri_appends = [];
         $this->setHosts($options);
 
         $options = array_merge($options, ['base_uri' => $this->base_uri]);
-
-        $group_routes = (!is_array($routes))? [$routes] : $routes;
+        $group_routes = (!is_array($routes)) ? [$routes] : $routes;
         $is_group = count($group_routes) > 1;
 
         foreach ($group_routes as $route) {
@@ -175,6 +181,31 @@ class RouteCollection
         }
     }
 
+    private function parsePrefix($options)
+    {
+        if (!empty($options['prefix'])) {
+            $prefix_parts = $options['prefix'];
+            if (!is_array($options['prefix'])) {
+                $prefix_parts = explode('/', $options['prefix']);
+            }
+
+            $prefix = [];
+            foreach ($prefix_parts as $pre) {
+                if (strpos($pre, '{') !== false) {
+                    $this->uri_appends[] = $pre;
+                } else {
+                    $prefix[] = $pre;
+                }
+            }
+
+            $prefix = implode('/', $prefix);
+            $this->setPrefixs("/" . $prefix . "/");
+            return $prefix;
+        }
+
+        return '';
+    }
+
     /**
      * @param $options
      * @return string
@@ -183,10 +214,25 @@ class RouteCollection
     {
         $prefix = "";
         if (!empty($options['prefix'])) {
-            $prefix = $options['prefix'];
-            if (is_array($options['prefix'])) {
-                $prefix = implode('/', $options['prefix']);
+
+            $prefix_parts = $options['prefix'];
+            if (!is_array($options['prefix'])) {
+                $prefix_parts = explode('/', $options['prefix']);
             }
+
+            $prefix = [];
+            foreach ($prefix_parts as $pre) {
+                if (strpos($pre, '{') !== false) {
+                    $this->uri_appends[] = $pre;
+                } else {
+                    $prefix[] = $pre;
+                }
+            }
+
+            //$prefix = $options['prefix'];
+            //if (is_array($options['prefix'])) {
+            $prefix = implode('/', $prefix);
+            //}
             $prefix = '/' . $prefix . '/';
         }
         return $prefix;
