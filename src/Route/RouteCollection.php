@@ -282,14 +282,19 @@ class RouteCollection
 
             $schemes = [];
             $hosts = [];
-            $prefixs = [];
+            //$prefixs = [];
+            $large = [];
+            $parameters = [];
             foreach ($array_routes[$method] as $key => $row) {
                 $schemes[$key] = $row['scheme'];
                 $hosts[$key] = $row['host'];
-                $prefixs[$key] = $row['prefix'];
+                //$prefixs[$key] = $row['prefix'];
+                $parameters[$key] = count($row['parameters']);
+                $large[$key] = count(explode('/', $row['uri']));
             }
 
-            array_multisort($schemes, SORT_DESC, $hosts, SORT_DESC, $prefixs, SORT_DESC, $array_routes[$method]);
+            //array_multisort($schemes, SORT_DESC, $hosts, SORT_DESC, $prefixs, SORT_DESC, $array_routes[$method]);
+            array_multisort($schemes, SORT_DESC, $hosts, SORT_DESC, $large, SORT_DESC, $parameters, SORT_ASC, $array_routes[$method]);
         }
 
         return $array_routes;
