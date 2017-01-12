@@ -104,7 +104,11 @@ class Route
 
         $host = '{_host:[^/]+}';
         if (!empty($this->options['host'])) {
-            $host = $this->options['host'];
+            if (is_array($this->options['host'])) {
+                $host = '{_host:(?:' . implode('|', $this->options['host']) . ')+}';
+            } else {
+                $host = $this->options['host'];
+            }
         }
 
         return $this->convertToRegex($scheme . $host . $this->uri);
@@ -123,7 +127,11 @@ class Route
 
         $host = '{_host:[^/]+}';
         if (!empty($this->options['host'])) {
-            $host = $this->options['host'];
+            if (is_array($this->options['host'])) {
+                $host = '{_host:(?:' . implode('|', $this->options['host']) . ')+}';
+            } else {
+                $host = $this->options['host'];
+            }
         }
 
         return $this->convertToRegex($scheme . $host . $this->setUri(false), false);
@@ -143,7 +151,11 @@ class Route
 
         $host = '{_host:[^/]+}';
         if (!empty($this->options['host'])) {
-            $host = $this->options['host'];
+            if (is_array($this->options['host'])) {
+                $host = '{_host:(?:' . implode('|', $this->options['host']) . ')+}';
+            } else {
+                $host = $this->options['host'];
+            }
         }
 
         return $this->setParameters($scheme . $host . $this->uri);
@@ -329,8 +341,8 @@ class Route
 
         $route = $this->setParameters($route);
         return '@^' . preg_replace_callback("@{([^}]+)}@", function ($match) {
-            return $this->regexParameter($match[0]);
-        }, $route) . $postfix;
+                return $this->regexParameter($match[0]);
+            }, $route) . $postfix;
     }
 
     /**

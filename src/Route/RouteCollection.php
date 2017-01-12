@@ -73,7 +73,6 @@ class RouteCollection
         //$options['prefix'] = $this->getPrefix($options);
         //$this->setPrefixs($options['prefix']);
 
-
         $options['prefix'] = $this->parsePrefix($options);
         $options['uri_appends'] = $this->uri_appends;
         $this->uri_appends = [];
@@ -163,8 +162,19 @@ class RouteCollection
      */
     private function setHosts($options)
     {
-        if (!empty($options['host']) && !in_array($options['host'], $this->hosts)) {
-            $this->hosts[] = $options['host'];
+        //if (!empty($options['host']) && !in_array($options['host'], $this->hosts)) {
+        //    $this->hosts[] = $options['host'];
+        //}
+        if (!empty($options['host'])) {
+            if (is_array($options['host'])) {
+                foreach ($options['host'] as $host) {
+                    if (!in_array($host, $this->hosts)) {
+                        $this->hosts[] = $host;
+                    }
+                }
+            } elseif (!in_array($options['host'], $this->hosts)) {
+                $this->hosts[] = $options['host'];
+            }
         }
     }
 
@@ -294,7 +304,8 @@ class RouteCollection
             }
 
             //array_multisort($schemes, SORT_DESC, $hosts, SORT_DESC, $prefixs, SORT_DESC, $array_routes[$method]);
-            array_multisort($schemes, SORT_DESC, $hosts, SORT_DESC, $large, SORT_DESC, $parameters, SORT_ASC, $array_routes[$method]);
+            array_multisort($schemes, SORT_DESC, $hosts, SORT_DESC, $large, SORT_DESC, $parameters, SORT_ASC,
+                $array_routes[$method]);
         }
 
         return $array_routes;
