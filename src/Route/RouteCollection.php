@@ -4,12 +4,6 @@ namespace Buuum;
 
 class RouteCollection
 {
-
-    /**
-     * @var string
-     */
-    private $base_uri;
-
     /**
      * @var array
      */
@@ -35,6 +29,9 @@ class RouteCollection
      */
     private $last_group = [];
 
+    /**
+     * @var array
+     */
     private $uri_appends = [];
     /**
      * @var array
@@ -47,20 +44,11 @@ class RouteCollection
     ];
 
     /**
-     * RouteCollection constructor.
-     * @param string $base_uri
-     */
-    public function __construct($base_uri = "")
-    {
-        $this->base_uri = $base_uri;
-    }
-
-    /**
      * @param $httpMethod
      * @param $routes
      * @param $options
      * @param $handler
-     * @return Route
+     * @return RouteCollection
      */
     public function addRoute($httpMethod, $routes, $options, $handler)
     {
@@ -70,15 +58,11 @@ class RouteCollection
 
         $this->last_group = [];
 
-        //$options['prefix'] = $this->getPrefix($options);
-        //$this->setPrefixs($options['prefix']);
-
         $options['prefix'] = $this->parsePrefix($options);
         $options['uri_appends'] = $this->uri_appends;
         $this->uri_appends = [];
         $this->setHosts($options);
 
-        $options = array_merge($options, ['base_uri' => $this->base_uri]);
         $group_routes = (!is_array($routes)) ? [$routes] : $routes;
         $is_group = count($group_routes) > 1;
 
@@ -149,11 +133,10 @@ class RouteCollection
     {
 
         return [
-            'base_uri' => $this->base_uri,
-            'prefixs'  => $this->prefixs,
-            'routes'   => $this->getArrayRoutes(),
-            'reverse'  => $this->getArrayReverse(),
-            'filters'  => $this->filters
+            'prefixs' => $this->prefixs,
+            'routes'  => $this->getArrayRoutes(),
+            'reverse' => $this->getArrayReverse(),
+            'filters' => $this->filters
         ];
     }
 
@@ -162,9 +145,6 @@ class RouteCollection
      */
     private function setHosts($options)
     {
-        //if (!empty($options['host']) && !in_array($options['host'], $this->hosts)) {
-        //    $this->hosts[] = $options['host'];
-        //}
         if (!empty($options['host'])) {
             if (is_array($options['host'])) {
                 foreach ($options['host'] as $host) {
@@ -217,38 +197,6 @@ class RouteCollection
     }
 
     /**
-     * @param $options
-     * @return string
-     */
-    private function getPrefix($options)
-    {
-        $prefix = "";
-        if (!empty($options['prefix'])) {
-
-            $prefix_parts = $options['prefix'];
-            if (!is_array($options['prefix'])) {
-                $prefix_parts = explode('/', $options['prefix']);
-            }
-
-            $prefix = [];
-            foreach ($prefix_parts as $pre) {
-                if (strpos($pre, '{') !== false) {
-                    $this->uri_appends[] = $pre;
-                } else {
-                    $prefix[] = $pre;
-                }
-            }
-
-            //$prefix = $options['prefix'];
-            //if (is_array($options['prefix'])) {
-            $prefix = implode('/', $prefix);
-            //}
-            $prefix = '/' . $prefix . '/';
-        }
-        return $prefix;
-    }
-
-    /**
      * @return array
      */
     private function getArrayReverse()
@@ -292,18 +240,15 @@ class RouteCollection
 
             $schemes = [];
             $hosts = [];
-            //$prefixs = [];
             $large = [];
             $parameters = [];
             foreach ($array_routes[$method] as $key => $row) {
                 $schemes[$key] = $row['scheme'];
                 $hosts[$key] = $row['host'];
-                //$prefixs[$key] = $row['prefix'];
                 $parameters[$key] = count($row['parameters']);
                 $large[$key] = count(explode('/', $row['uri']));
             }
 
-            //array_multisort($schemes, SORT_DESC, $hosts, SORT_DESC, $prefixs, SORT_DESC, $array_routes[$method]);
             array_multisort($schemes, SORT_DESC, $hosts, SORT_DESC, $large, SORT_DESC, $parameters, SORT_ASC,
                 $array_routes[$method]);
         }

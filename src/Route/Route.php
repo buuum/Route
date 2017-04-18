@@ -2,9 +2,6 @@
 
 namespace Buuum;
 
-//https://github.com/mrjgreen/phroute/tree/v3/examples
-//https://laravel.com/docs/5.2/routing#route-groups
-
 class Route
 {
     /**
@@ -19,6 +16,7 @@ class Route
     const DELETE = 'DELETE';
     const OPTIONS = 'OPTIONS';
     const LINK = 'LINK';
+    const ERROR = 'ERROR';
 
     /**
      * @var string
@@ -96,20 +94,8 @@ class Route
     private function getUriRegex()
     {
 
-        $scheme = '{_scheme:[^:]+}';
-        if (!empty($this->options['scheme'])) {
-            $scheme = $this->options['scheme'];
-        }
-        $scheme .= '://';
-
-        $host = '{_host:[^/]+}';
-        if (!empty($this->options['host'])) {
-            if (is_array($this->options['host'])) {
-                $host = '{_host:(?:' . implode('|', $this->options['host']) . ')+}';
-            } else {
-                $host = $this->options['host'];
-            }
-        }
+        $scheme = $this->findScheme();
+        $host = $this->findHost();
 
         return $this->convertToRegex($scheme . $host . $this->uri);
     }
@@ -119,20 +105,8 @@ class Route
      */
     private function getUriRegexPre()
     {
-        $scheme = '{_scheme:[^:]+}';
-        if (!empty($this->options['scheme'])) {
-            $scheme = $this->options['scheme'];
-        }
-        $scheme .= '://';
-
-        $host = '{_host:[^/]+}';
-        if (!empty($this->options['host'])) {
-            if (is_array($this->options['host'])) {
-                $host = '{_host:(?:' . implode('|', $this->options['host']) . ')+}';
-            } else {
-                $host = $this->options['host'];
-            }
-        }
+        $scheme = $this->findScheme();
+        $host = $this->findHost();
 
         return $this->convertToRegex($scheme . $host . $this->setUri(false), false);
     }
@@ -143,20 +117,8 @@ class Route
     private function getUriReverse()
     {
 
-        $scheme = '{_scheme:[^:]+}';
-        if (!empty($this->options['scheme'])) {
-            $scheme = $this->options['scheme'];
-        }
-        $scheme .= '://';
-
-        $host = '{_host:[^/]+}';
-        if (!empty($this->options['host'])) {
-            if (is_array($this->options['host'])) {
-                $host = '{_host:(?:' . implode('|', $this->options['host']) . ')+}';
-            } else {
-                $host = $this->options['host'];
-            }
-        }
+        $scheme = $this->findScheme();
+        $host = $this->findHost();
 
         return $this->setParameters($scheme . $host . $this->uri);
     }
@@ -301,15 +263,6 @@ class Route
         return str_replace($f, $r, $content);
     }
 
-
-    private function getUriAppend()
-    {
-        if (!empty($this->options['uri_appends'])) {
-            return implode('/', $this->options['uri_appends']);
-        }
-        return '';
-    }
-
     /**
      * @return string
      */
@@ -319,14 +272,6 @@ class Route
             return $this->options['prefix'];
         }
         return '';
-        //$prefix = "";
-        //if (!empty($this->options['prefix'])) {
-        //    $prefix = $this->options['prefix'];
-        //    if (is_array($this->options['prefix'])) {
-        //        $prefix = implode('/', $this->options['prefix']);
-        //    }
-        //}
-        //return $prefix;
     }
 
 
@@ -396,10 +341,6 @@ class Route
             $uri .= '/' . $this->getPrefix();
         }
 
-        //if (!empty($this->getUriAppend())) {
-        //    $uri .= '/' . $this->getUriAppend();
-        //}
-
         if (substr($this->route, -1) == '/') {
             $this->close_tag = '/';
             $this->route = substr($this->route, 0, -1);
@@ -421,6 +362,30 @@ class Route
             $end = (!empty($this->route)) ? '/' : '';
             return $this->safeRegex($uri . $end);
         }
+    }
+
+    private function findScheme()
+    {
+        $scheme = '{_scheme:[^:]+}';
+        if (!empty($this->options['scheme'])) {
+            $scheme = $this->options['scheme'];
+        }
+        $scheme .= '://';
+        return $scheme;
+    }
+
+    private function findHost()
+    {
+        $host = '{_host:[^/]+}';
+        if (!empty($this->options['host'])) {
+            if (is_array($this->options['host'])) {
+                $host = '{_host:(?:' . implode('|', $this->options['host']) . ')+}';
+            } else {
+                $host = $this->options['host'];
+            }
+        }
+
+        return $host;
     }
 
 }

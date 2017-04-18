@@ -40,111 +40,64 @@ class Dispatcher
     private $last_route = [];
 
     /**
+     * @var HandlerResolverInterface|null
+     */
+    private $resolver;
+
+    /**
      * Dispatcher constructor.
      * @param array $data
+     * @param HandlerResolverInterface|null $resolver
      */
-    public function __construct(array $data)
+    public function __construct(array $data, HandlerResolverInterface $resolver = null)
     {
         $this->route_map = $data;
+        $this->resolver = $resolver;
     }
 
     /**
      * @param $httpMethod
      * @param $requestUrl
-     * @param HandlerResolverInterface|null $resolver
      * @return bool|mixed|null
      * @throws HttpMethodNotAllowedException
      * @throws HttpRouteNotFoundException
      */
-    public function dispatchRequest($httpMethod, $requestUrl, HandlerResolverInterface $resolver = null)
+    public function dispatchRequest($httpMethod, $requestUrl)
     {
-        $httpMethod = strtoupper($httpMethod);
+        $requestUrl = $this->setUrlRequest($requestUrl);
+        $httpMethod = $this->checkMethod($httpMethod);
 
-        $this->request_url = $requestUrl;
-        $this->parseUrl($requestUrl);
-        if (!$this->issetMethod($httpMethod)) {
-            if ($resolver && $resolver->parseErrors()) {
-                return $resolver->resolveErrors(self::ERRORMETHODNOTALLOWED, $this->url_info);
-            } else {
-                throw new HttpMethodNotAllowedException("Not method $httpMethod allowed");
-            }
-        }
-        $this->checkBaseURI();
-
-        // Strip query string (?a=b) from Request Url
-        if (($strpos = strpos($requestUrl, '?')) !== false) {
-            $requestUrl = substr($requestUrl, 0, $strpos);
-        }
-
-        if (!isset($this->route_map['routes'][Route::ANY]) || !is_array($this->route_map['routes'][Route::ANY])) {
-            $this->route_map['routes'][Route::ANY] = [];
-        }
-        if (!isset($this->route_map['routes'][$httpMethod]) ||
-            !is_array($this->route_map['routes'][$httpMethod])
-        ) {
-            $this->route_map['routes'][$httpMethod] = [];
-        }
-        $routes = array_merge($this->route_map['routes'][Route::ANY], $this->route_map['routes'][$httpMethod]);
-        $flag = false;
+        $routes = $this->getRoutes($httpMethod);
 
         foreach ($routes as $route) {
-
             $route_pattern = $route['regex'];
-
             if (preg_match($route_pattern, $requestUrl, $arguments)) {
-
-                $arguments['_requesturi'] = $this->url_info;
-                $arguments['_prefix'] = $route['prefix'];
-
-                $this->last_route = $route;
-
-                // before filters //
-                if (!empty($route['before'])) {
-                    foreach ($route['before'] as $before) {
-                        $response = $this->callFunction($this->route_map['filters'][$before], $arguments, null,
-                            $resolver);
-                        if ($response !== null) {
-                            if (!is_array($response)) {
-                                return $response;
-                            }
-                            if (!isset($response['passed']) || !isset($response['response'])) {
-                                throw new \InvalidArgumentException("Response should be an array composed by keys 'passed' and 'response'");
-                            }
-                            if (!$response['passed']) {
-                                return $response['response'];
-                            } else {
-                                if (is_array($response['response'])) {
-                                    $arguments = array_merge($arguments, $response['response']);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                $response = $this->callFunction($route['handler'], $arguments, null, $resolver);
-
-                // after filters //
-                if (!empty($route['after'])) {
-                    foreach ($route['after'] as $after) {
-                        $response = $this->callFunction($this->route_map['filters'][$after], $arguments, $response,
-                            $resolver);
-                    }
-                }
-
-                return $response;
-
+                return $this->getResponse($route, $arguments);
             }
         }
 
-        if (!$flag) {
-            if ($resolver && $resolver->parseErrors()) {
-                return $resolver->resolveErrors(self::ERRORNOTFOUND, $this->url_info);
-            } else {
-                throw new HttpRouteNotFoundException("Not route found");
+        return $this->dispatchError($requestUrl);
+
+    }
+
+    /**
+     * @param $requestUrl
+     * @return array|mixed|null
+     * @throws HttpRouteNotFoundException
+     */
+    public function dispatchError($requestUrl)
+    {
+        $requestUrl = $this->setUrlRequest($requestUrl);
+
+        // check for error pages //
+        foreach ($this->route_map['routes'][Route::ERROR] as $route) {
+            $route_pattern = str_replace('?$@', '?@', $route['regex']);
+            if (preg_match($route_pattern, $requestUrl, $arguments)) {
+                return $this->getResponse($route, $arguments);
             }
         }
 
-        return true;
+        throw new HttpRouteNotFoundException("Not route found");
 
     }
 
@@ -157,17 +110,11 @@ class Dispatcher
      */
     public function getUrlRequest($name, $options = [], $requestUrl = null)
     {
-        if (is_null($requestUrl) && is_null($this->request_url)) {
+        if ((is_null($requestUrl) && is_null($this->request_url)) || empty($this->route_map['reverse'][$name])) {
             throw new HttpRouteNotFoundException("Route $name not found");
         }
-        $requestUrl = ($requestUrl) ?: $this->request_url;
 
-        $this->parseUrl($requestUrl);
-        $this->checkBaseURI();
-
-        if (empty($this->route_map['reverse'][$name])) {
-            throw new HttpRouteNotFoundException("Route $name not found");
-        }
+        $requestUrl = $this->setUrlRequest($requestUrl, false);
 
         if (count($this->route_map['reverse'][$name]) == 1) {
 
@@ -210,49 +157,29 @@ class Dispatcher
     /**
      * @param $controller
      * @param $parameters
-     * @param null $_response
-     * @param HandlerResolverInterface|null $resolver
      * @return mixed|null
      * @throws HttpMethodNotExistException
      */
-    private function callFunction(
-        $controller,
-        $parameters,
-        $_response = null,
-        HandlerResolverInterface $resolver = null
-    ) {
+    private function callFunction($controller, $parameters)
+    {
 
         if (!is_array($controller) && is_callable($controller)) {
             $parameters = $this->arrangeFuncArgs($controller, $parameters);
-            $response = call_user_func_array($controller, $parameters);
-        } else {
-            if (method_exists($class = $controller[0], $method = $controller[1])) {
-                $parameters = $this->arrangeMethodArgs($class, $method, $parameters);
-                if ($resolver) {
-                    $response = call_user_func_array($resolver->resolve($controller), $parameters);
-                } else {
-                    $response = call_user_func_array([$class, $method], $parameters);
-                }
-            } else {
-                if ($resolver && $resolver->parseErrors()) {
-                    return $resolver->resolveErrors(self::ERRORCLASSMETHODNOTFOUND, $this->url_info);
-                } else {
-                    throw new HttpMethodNotExistException("Not method $method exist in class $class");
-                }
+            return call_user_func_array($controller, $parameters);
+        }
+
+        if (method_exists($class = $controller[0], $method = $controller[1])) {
+            $parameters = $this->arrangeMethodArgs($class, $method, $parameters);
+            $controller = [$class, $method];
+            if ($this->resolver) {
+                $controller = $this->resolver->resolve($controller);
             }
+
+            return call_user_func_array($controller, $parameters);
         }
 
-        return ($_response) ? $_response : $response;
-    }
+        throw new HttpMethodNotExistException("Not method $method exist in class $class");
 
-    /**
-     * @throws HttpRouteNotFoundException
-     */
-    private function checkBaseURI()
-    {
-        if (substr($this->url_info['path'], 0, strlen($this->route_map['base_uri'])) != $this->route_map['base_uri']) {
-            throw new HttpRouteNotFoundException(self::ERRORNOTFOUND);
-        }
     }
 
     /**
@@ -263,18 +190,7 @@ class Dispatcher
     private function arrangeFuncArgs($function, $arguments)
     {
         $ref = new \ReflectionFunction($function);
-        return array_map(
-            function (\ReflectionParameter $param) use ($arguments) {
-                if (isset($arguments[$param->getName()])) {
-                    return $arguments[$param->getName()];
-                }
-                if ($param->isOptional()) {
-                    return $param->getDefaultValue();
-                }
-                return null;
-            },
-            $ref->getParameters()
-        );
+        return $this->arrangeArgs($ref->getParameters(), $arguments);
     }
 
     /**
@@ -286,6 +202,16 @@ class Dispatcher
     private function arrangeMethodArgs($class, $method, $arguments)
     {
         $ref = new \ReflectionMethod($class, $method);
+        return $this->arrangeArgs($ref->getParameters(), $arguments);
+    }
+
+    /**
+     * @param $parameters
+     * @param $arguments
+     * @return array
+     */
+    private function arrangeArgs($parameters, $arguments)
+    {
         return array_map(
             function (\ReflectionParameter $param) use ($arguments) {
                 if (isset($arguments[$param->getName()])) {
@@ -296,22 +222,8 @@ class Dispatcher
                 }
                 return null;
             },
-            $ref->getParameters()
+            $parameters
         );
-    }
-
-    /**
-     * @param $httpMethod
-     * @return bool
-     */
-    private function issetMethod($httpMethod)
-    {
-
-        $httpMethod = strtoupper($httpMethod);
-        if (!defined("\\Buuum\\Route::$httpMethod")) {
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -372,5 +284,150 @@ class Dispatcher
         }
 
         return $url;
+    }
+
+    /**
+     * @param $httpMethod
+     * @return bool
+     */
+    private function issetMethod($httpMethod)
+    {
+
+        $httpMethod = strtoupper($httpMethod);
+        if (!defined("\\Buuum\\Route::$httpMethod")) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @param $httpMethod
+     * @return string
+     * @throws HttpMethodNotAllowedException
+     */
+    private function checkMethod($httpMethod)
+    {
+        $httpMethod = strtoupper($httpMethod);
+
+        if (!$this->issetMethod($httpMethod)) {
+            throw new HttpMethodNotAllowedException("Not method $httpMethod allowed");
+        }
+
+        return $httpMethod;
+    }
+
+    /**
+     * @param $requestUrl
+     * @param bool $save
+     * @return string
+     */
+    private function setUrlRequest($requestUrl, $save = true)
+    {
+        if ($save) {
+            $this->request_url = $requestUrl;
+        } elseif (!$requestUrl) {
+            return $this->request_url;
+        }
+
+        $this->parseUrl($requestUrl);
+
+        // Strip query string (?a=b) from Request Url
+        if (($strpos = strpos($requestUrl, '?')) !== false) {
+            $requestUrl = substr($requestUrl, 0, $strpos);
+        }
+
+        return $requestUrl;
+    }
+
+    /**
+     * @param $httpMethod
+     * @return array
+     */
+    private function getRoutes($httpMethod)
+    {
+        if (!isset($this->route_map['routes'][Route::ANY]) || !is_array($this->route_map['routes'][Route::ANY])) {
+            $this->route_map['routes'][Route::ANY] = [];
+        }
+
+        if (!isset($this->route_map['routes'][$httpMethod]) || !is_array($this->route_map['routes'][$httpMethod])) {
+            $this->route_map['routes'][$httpMethod] = [];
+        }
+
+        if (!isset($this->route_map['routes'][Route::ERROR])) {
+            $this->route_map['routes'][Route::ERROR] = [];
+        }
+
+        return array_merge($this->route_map['routes'][Route::ANY], $this->route_map['routes'][$httpMethod]);
+    }
+
+    /**
+     * @param $route
+     * @param $arguments
+     * @return array|mixed|null
+     */
+    private function executeBefores($route, $arguments)
+    {
+        if (!empty($route['before'])) {
+            foreach ($route['before'] as $before) {
+                $response = $this->callFunction($this->route_map['filters'][$before], $arguments);
+                if ($response !== null) {
+                    var_dump($response);
+                    if (!is_array($response)) {
+                        return $response;
+                    }
+                    if (!isset($response['passed']) || !isset($response['response'])) {
+                        throw new \InvalidArgumentException("Response should be an array composed by keys 'passed' and 'response'");
+                    }
+                    if (!$response['passed']) {
+                        return $response['response'];
+                    } else {
+                        if (is_array($response['response'])) {
+                            $arguments = array_merge($arguments, $response['response']);
+                        }
+                    }
+                }
+            }
+        }
+
+        return [
+            'arguments' => $arguments
+        ];
+    }
+
+    /**
+     * @param $route
+     * @param $arguments
+     */
+    private function executeAfters($route, $arguments)
+    {
+        // after filters //
+        if (!empty($route['after'])) {
+            foreach ($route['after'] as $after) {
+                $this->callFunction($this->route_map['filters'][$after], $arguments);
+            }
+        }
+    }
+
+    /**
+     * @param $route
+     * @param $arguments
+     * @return array|mixed|null
+     */
+    private function getResponse($route, $arguments)
+    {
+        $arguments['_requesturi'] = $this->url_info;
+        $arguments['_prefix'] = $route['prefix'];
+
+        $this->last_route = $route;
+
+        $response = $this->executeBefores($route, $arguments);
+        if (!is_array($response)) {
+            return $response;
+        }
+        $arguments = $response['arguments'];
+        $response = $this->callFunction($route['handler'], $arguments);
+        $this->executeAfters($route, $arguments);
+
+        return $response;
     }
 }

@@ -2,8 +2,6 @@
 
 namespace Buuum;
 
-use Buuum\Exception\BadRouteException;
-
 class Router
 {
     /**
@@ -20,14 +18,10 @@ class Router
 
     /**
      * Router constructor.
-     * @param string $base_uri
      */
-    public function __construct($base_uri = "")
+    public function __construct()
     {
-        if (!is_string($base_uri)) {
-            throw new BadRouteException("Base URI must be a string value");
-        }
-        $this->collection = new RouteCollection($base_uri);
+        $this->collection = new RouteCollection();
     }
 
     /**
@@ -48,7 +42,7 @@ class Router
      * @param string $httpMethod Valid Http method
      * @param string $route defined url
      * @param array|callable $controller handler for route
-     * @return Route
+     * @return RouteCollection
      */
     public function map($httpMethod, $route, $controller)
     {
@@ -58,7 +52,7 @@ class Router
     /**
      * @param string $route defined url
      * @param array|callable $controller handler for route
-     * @return Route
+     * @return RouteCollection
      */
     public function any($route, $controller)
     {
@@ -68,7 +62,7 @@ class Router
     /**
      * @param string $route defined url
      * @param array|callable $controller handler for route
-     * @return Route
+     * @return RouteCollection
      */
     public function get($route, $controller)
     {
@@ -78,7 +72,7 @@ class Router
     /**
      * @param string $route defined url
      * @param array|callable $controller handler for route
-     * @return Route
+     * @return RouteCollection
      */
     public function head($route, $controller)
     {
@@ -88,7 +82,7 @@ class Router
     /**
      * @param string $route defined url
      * @param array|callable $controller handler for route
-     * @return Route
+     * @return RouteCollection
      */
     public function post($route, $controller)
     {
@@ -98,7 +92,7 @@ class Router
     /**
      * @param string $route defined url
      * @param array|callable $controller handler for route
-     * @return Route
+     * @return RouteCollection
      */
     public function put($route, $controller)
     {
@@ -108,7 +102,7 @@ class Router
     /**
      * @param string $route defined url
      * @param array|callable $controller handler for route
-     * @return Route
+     * @return RouteCollection
      */
     public function patch($route, $controller)
     {
@@ -118,7 +112,7 @@ class Router
     /**
      * @param string $route defined url
      * @param array|callable $controller handler for route
-     * @return Route
+     * @return RouteCollection
      */
     public function delete($route, $controller)
     {
@@ -128,7 +122,7 @@ class Router
     /**
      * @param string $route defined url
      * @param array|callable $controller handler for route
-     * @return Route
+     * @return RouteCollection
      */
     public function options($route, $controller)
     {
@@ -137,11 +131,21 @@ class Router
 
     /**
      * @param $route
-     * @return Route
+     * @return RouteCollection
      */
     public function link($route)
     {
         return $this->map(Route::LINK, $route, []);
+    }
+
+    /**
+     * @param $route
+     * @param $controller
+     * @return RouteCollection
+     */
+    public function error($route, $controller)
+    {
+        return $this->map(Route::ERROR, $route, $controller);
     }
 
     /**
