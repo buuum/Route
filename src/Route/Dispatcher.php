@@ -371,7 +371,7 @@ class Dispatcher
             foreach ($route['before'] as $before) {
                 $response = $this->callFunction($this->route_map['filters'][$before], $arguments);
                 if ($response !== null) {
-                    var_dump($response);
+
                     if (!is_array($response)) {
                         return $response;
                     }
