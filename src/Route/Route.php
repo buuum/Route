@@ -296,9 +296,10 @@ class Route
      */
     private function safeRegex($content)
     {
-        $f = array('(', ')');
-        $r = array('\(', '\)');
-        return str_replace($f, $r, $content);
+        return $content;
+        //$f = array('(', ')');
+        //$r = array('\(', '\)');
+        //return str_replace($f, $r, $content);
     }
 
 
